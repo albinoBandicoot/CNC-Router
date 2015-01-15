@@ -36,6 +36,22 @@ module ballnut () {
 	}
 }
 
+module ballnut_mount_bracket (len=75, screw_offset = 27) {
+	difference () {
+		translate ([0,-0.188*in, screw_offset]) rotate ([0,90,0]) linear_extrude (height=len, center=true, convexity=4) {
+			L (2*in, 2*in, 0.188*in, 0.188*in);
+		}
+		rotate ([90,0,0]) {
+			ballnut_holes() hole (5);
+				hole (20);
+		}
+		dup ([len-15, 0,0]) {
+			translate ([0,10,0]) linear_pattern (n=2, axis=[0,30,0]) hole (5);
+		}
+		
+	}
+}
+//ballnut_mount_bracket(len=50, screw_offset=27);
 module ballscrew (len) {
 	bearing_len = 11;
 	lg_nonthread_len = 25;
@@ -67,6 +83,8 @@ module shaft_adapter () {
 }
 
 stepper_screw_offset = 22;	// distance between stepper plate and end of ballscrew.
+stepper_wd = 56.2;
+stepper_len = 40;
 module stepper () {
 	module sbody (h) {
 		difference () {
@@ -127,6 +145,8 @@ module zrail () {
 
 yzrail_block_center = 26.6-5.9-10.35;
 yzrail_block_len = 39;
+yzrail_block_OFFSET = (yzrail_center_ht - yzrail_block_center) + 26.6 + 1.2;
+
 module yzrail_block () {
 	module halfblock () {
 		square ([19, 26.6]);
@@ -167,6 +187,7 @@ module xrail () {
 }
 
 xblock_len = 34;
+xblock_ht = 24;
 module xrail_block() {
 	color ([0.35, 0.35, 0.35]) 
 	difference () {
@@ -199,6 +220,31 @@ module spindle_motor () {
 }
 
 motor_axis_offset = 5.9 + 2.25*in/2;
+
+module motor_mount_bottom_bracket () {
+	len = 60;
+	difference () {
+		rotate ([90,0,-90]) linear_extrude (height=len, convexity=3, center=true) {
+			L (th1=0.188*in, th2=0.188*in, leg1 = 2*in, leg2=2*in);
+		}
+
+		// motor mount holes
+		translate ([0,-motor_axis_offset,0]) {
+			circular_pattern (n=4, r=39/2) {
+				hole (4);
+			}
+			hole (15);
+		}
+		// holes for attachment to spindle plate
+		dup ([len-15, 0, 0], center=[0,0,12]) {
+			linear_pattern (n=2, axis = [0,0,30]) rotate ([90, 0, 0]) hole (6);
+		}
+	}
+}
+
+//motor_mount_bottom_bracket();
+
+
 module motor_mount_bracket () {
 	color ("lightgrey") difference () {
 		linear_extrude (height=36.6, convexity=2) {
@@ -224,3 +270,54 @@ module motor_mount_bracket () {
 				
 	}
 }
+
+module zbearing_block () {
+	rotate ([0,0,-90]) difference () {
+		rotate ([90,90,0]) linear_extrude (height=45, convexity=3, center=true) {
+			L (th1=5, th2=10, leg1=45, leg2=48);
+		}
+		translate ([28,0,0]) hole (15);	// clearance for screw
+		translate ([28,0,-21]) cylinder (r=30.6/2, h=20);	// bearing hole
+		// holes to keep bearing in place
+		translate ([20,16,0]) hole (3.5);
+		translate ([20,-16,0]) hole (3.5);
+		// mount holes
+		translate ([0,-30/2,-38]) linear_pattern (n=2, axis=[0,30,20]) {
+			rotate ([0,90,0]) hole (6);
+		}
+	}
+}
+
+module zstepper_mount () {
+	th=4;
+	ht=25;
+	hole_spacing = 95;
+	rotate ([0,0,180]) translate ([0,-stepper_wd/2,ht/2-th]) {
+		difference () {
+			linear_extrude (height=ht, convexity=3, center=true) {
+				dupm ([-stepper_wd,0,0]) {
+					L (th1=th, th2=th, leg1=30, leg2=stepper_wd+th);
+				}
+				translate ([0,stepper_wd+th/2]) square ([stepper_wd,4], true);
+			}
+			// holes for mounting to Z plate
+			dup ([hole_spacing, 0, 0]) {
+				rotate ([90,0,0]) hole (6.3);	// M6; prints vertically so hole size can be smalle	r
+			}
+		}
+	
+		// faceplate blocks
+		translate ([0,0,-ht/2]) {
+			difference () {
+				dup ([-stepper_wd+8,0,0]) {
+					translate ([-8,0,0]) cube ([16, stepper_wd, th]);
+				}
+				translate ([0, stepper_wd/2, 0]) {
+					cylinder (r=20, h=100, center=true);
+					stepper_holes();
+				}
+			}
+		}
+	}
+}
+
