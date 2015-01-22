@@ -146,7 +146,7 @@ module zrail () {
 yzrail_block_center = 26.6-5.9-10.35;
 yzrail_block_len = 39;
 yzrail_block_OFFSET = (yzrail_center_ht - yzrail_block_center) + 26.6 + 1.2;
-
+echo (yzrail_block_OFFSET);
 module yzrail_block () {
 	module halfblock () {
 		square ([19, 26.6]);
@@ -168,6 +168,17 @@ module yzrail_block () {
 		translate ([-14,(39-26)/2,0]) grid_pattern (n1=2, n2=2, axis1=[28,0,0], axis2=[0,26,0], center=false) {
 			translate ([0,0,28.8-12]) cylinder (h=12, r=5/2);
 		}
+	}
+}
+
+module zblock_spacer () {
+	difference () {
+		translate ([-20, 0, 27.8]) cube ([40, 39, 15.35]);
+		translate ([-14, (39-26)/2, 0]) grid_pattern (n1=2, n2=2, axis1=[28,0,0], axis2=[0,26,0], center=false) {
+			hole (5.5);
+		}
+		translate ([0, 39/2,0]) cube ([50, 15, 80], true);
+		translate ([0,20,0]) cube ([15,50,80], true);
 	}
 }
 
@@ -292,13 +303,15 @@ module zstepper_mount () {
 	th=4;
 	ht=25;
 	hole_spacing = 95;
-	rotate ([0,0,180]) translate ([0,-stepper_wd/2,ht/2-th]) {
+	fudge = 0.5;
+	stepwd = stepper_wd + fudge;
+	rotate ([0,0,180]) translate ([0,-stepwd/2,ht/2-th]) {
 		difference () {
 			linear_extrude (height=ht, convexity=3, center=true) {
-				dupm ([-stepper_wd,0,0]) {
-					L (th1=th, th2=th, leg1=30, leg2=stepper_wd+th);
+				dupm ([-stepwd,0,0]) {
+					L (th1=th, th2=th, leg1=30, leg2=stepwd+th);
 				}
-				translate ([0,stepper_wd+th/2]) square ([stepper_wd,4], true);
+				translate ([0,stepwd+th/2]) square ([stepwd,4], true);
 			}
 			// holes for mounting to Z plate
 			dup ([hole_spacing, 0, 0]) {
@@ -309,10 +322,10 @@ module zstepper_mount () {
 		// faceplate blocks
 		translate ([0,0,-ht/2]) {
 			difference () {
-				dup ([-stepper_wd+8,0,0]) {
-					translate ([-8,0,0]) cube ([16, stepper_wd, th]);
+				dup ([-stepwd+8,0,0]) {
+					translate ([-8,0,0]) cube ([16, stepwd, th]);
 				}
-				translate ([0, stepper_wd/2, 0]) {
+				translate ([0, stepwd/2, 0]) {
 					cylinder (r=20, h=100, center=true);
 					stepper_holes();
 				}
@@ -321,3 +334,94 @@ module zstepper_mount () {
 	}
 }
 
+module xstepper_mount (offset) {
+	th=5;
+	tablen = 20;
+	wd = stepper_wd + 4;
+	union () {
+	linear_extrude (height=5) {
+		difference () {
+			union () {
+				square ([wd, stepper_wd], true);
+				circular_pattern (n=4, r=67/2, theta=45) circle (d=15);
+				translate ([offset,0,0]) {
+					difference () {
+						square ([stepper_wd/2, stepper_wd + 2*tablen], true);
+						dup ([0, stepper_wd + 2*tablen - 12, 0]) circle (d=5);
+					}
+				}
+			}
+			translate ([10,0]) circle (14);
+			circular_pattern (n=4, r=67/2, theta=45) circle (d=6);
+		}
+	}
+	translate ([offset - 22.5 - th/2,0,0]) {
+		difference () {
+			linear_extrude (height = 33) {
+				square ([th, stepper_wd/2],true);
+			}
+			translate ([0,0,22.5+th]) rotate ([0,90,0]) hole (5);
+		}
+		dupm ([0,stepper_wd/2 - th*2,0], center=[-th/2,0,th-0.5]) rotate ([90,0,0]) linear_extrude (height=th) polygon ([[0,0],[0,25],[-15,0]]);
+	}
+	}
+}
+
+module xbearing_block (xpos, offset=15) {
+	//offset = 15;
+	bh_th = 10.5;
+	th=4;
+	module crossbrace (sy, ey, th) {
+		polygon ([[0, sy], [0, sy+th], [xpos+bh_th, ey+th], [xpos+bh_th, ey]]);
+	}
+	translate ([0, -(20-offset), -20]) {
+		difference () {
+			translate ([0,-7.5,0]) cube ([5, 47.5, 60]);
+			translate ([0, 22.5 + 5 - 7.5, 52]) holex (4.8);
+		}
+		difference () {
+			translate ([0, -7.5, 0]) cube ([40, 5, 40]);
+			translate ([22.5 + 5, 0, 8]) holey (4.8);
+			translate ([22.5 + 5, 0, 32]) holey(4.8);
+		}
+	
+
+		translate ([xpos,-offset,0]) difference () {
+			cube ([bh_th, 40,40]);
+			rotate ([0,90,0]) {
+				translate ([-20, 20, -11.5]) cylinder (r=15.2, h=20);
+				translate ([-20, 20, 0]) hole (15);
+			}
+		}
+		
+		linear_extrude (height=40, convexity=6) {
+			crossbrace (-7.5, -offset, th);
+			crossbrace (-7.5, 40-offset-5, 5);
+			crossbrace (40-th, 40-offset-th, th);
+		}
+	}
+}
+
+module ystepper_mount () {
+	hspace = 67*sqrt(2)/2;
+	difference () {
+		union () {
+			translate ([0,2.5,-10]) cube ([60, 5, 80], true);
+			translate ([0,20,-12.5]) cube ([60, 40, 5], true);
+			dup ([55,0,0], center=[0,10,-5]) rotate ([90,0,90]) cylinder (r=10, h=5, center=true);
+		}
+		dup ([hspace, 0, 0], center=[0,0,hspace/2]) holey(4.8);
+		dup ([hspace, 0, 0], center=[0,0,-hspace/2]) holey(3);
+		holey(28);
+		dup ([48, 0, 0], center=[0,27.5,0]) hole (5);
+		dup ([48, 0, 0], center=[0, 0, -22.5-15]) holey (5);
+		translate ([0,0,-33]) holey (23);
+	}
+}
+
+//rotate ([90,0,0])ystepper_mount();
+module ybearing_block() {
+	
+}
+
+xbearing_block (-25);

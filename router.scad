@@ -9,6 +9,7 @@ ZPOS = 0;
 xstage_col = [1, 0.7, 0.2];
 ystage_col = [0.9, 0.45, 0.7];
 zstage_col = [0.5, 0.5, 0.9];
+sstage_col = [0.5, 0.8, 1];
 pillar_col = [0.7, 1, 0.4];
 
 /* Base frame */
@@ -65,6 +66,9 @@ module yscrew () {
 			color (ystage_col) ballnut_mount_bracket();
 		}		
 		rotate ([0,-90,90]) stepper();
+		ystepper_mount();
+		translate ([0,stepper_screw_offset+500 + 42.5,0]) rotate([-90,0,90]) xbearing_block (-52.5, offset=22.5+15);
+		
 	}
 }
 
@@ -122,17 +126,19 @@ module xguides () {
 	}
 }
 
-xstepper_mountpos = -250;
+xstepper_mountpos = -245;
 xscrew_z = xbar_bot_ht + xbar_spacing/2;
 xscrew_xoffset = 0;
-xscrew_yoffset = -20 + pillar_ypos;
+xscrew_yoffset = -15 + pillar_ypos;
 module xscrew () {
 	translate ([xstepper_mountpos, xscrew_yoffset, xscrew_z]) {
 		translate ([stepper_screw_offset,0,0]) rotate ([0,90,0]) ballscrew(500);
 		translate ([stepper_screw_offset + 55 +XPOS, 0,0]) rotate ([0,90,0]) ballnut ();
 		translate ([stepper_screw_offset + 55 + XPOS, 0,0]) rotate([90,0,0]) rotate([0,0,90]) ballnut_mount_bracket();
 		rotate([0,-90,0]) stepper();
+		translate ([-54.7,0,0]) rotate([-90,0,90]) xstepper_mount(pillar_ypos - xscrew_yoffset);
 	}
+	translate ([300,xscrew_yoffset,xscrew_z]) xbearing_block(-25);
 }
 
 /* Z-AXIS plate, guides, screw, and motor */
@@ -148,9 +154,13 @@ zplate_bot = xbar_top_ht - 12*in;
 zrail_sep = 100;
 zrail_bias = -1*in;
 zaxis_block_spacing = 6*in - yzrail_block_len;//yzrail_block_len + 70;
+
 module zguides () {
 	module block() {
-		translate ([0,-(yzrail_center_ht - yzrail_block_center),0]) rotate ([90,0,0]) yzrail_block();
+		translate ([0,-(yzrail_center_ht - yzrail_block_center),0]) rotate ([90,0,0]) {
+			yzrail_block();
+			color (sstage_col) zblock_spacer();
+		}
 	}
 	translate ([0, zplate_surface_y, zplate_bot + (12*in-250)/2 + zrail_bias]) {
 		dup ([zrail_sep,0,0]) {

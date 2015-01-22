@@ -217,6 +217,18 @@ module hole (d) {
 	cylinder (r=d/2, h=1000, center=true);
 }
 
+module holex (d) {
+	rotate ([0,90,0]) hole(d);
+}
+
+module holey (d) {
+	rotate ([90,0,0]) hole(d);
+}
+
+module holez (d) {
+	hole(d);
+}
+
 nutsizes = [	[2.5, 5],
 				[3, 5.5], 
 				[4, 7], 
